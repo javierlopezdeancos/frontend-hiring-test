@@ -1,56 +1,98 @@
-import { createContext, useContext, useMemo, useState } from 'react';
+import { createContext, useContext, useState } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { LOGIN } from '../gql/mutations';
 import { useLocalStorage } from './useLocalStorage';
 import { useMutation } from '@apollo/client';
+import type { LoginInput, AuthResponseType } from '../declarations/auth';
+import { AppStatus } from '../constants/app';
+import { UserLocalStorageKey, TOKEN_EXPIRATION_MINUTES } from '../constants/user';
 
 const AuthContext = createContext({
-  login: ({}) => {},
-  logout: () => {}
+  login: ({ username, password }: LoginInput): Promise<any> =>
+    new Promise(resolve => {
+      resolve({} as AuthResponseType);
+    }),
+  logout: () => {},
+  isAuth: () => Boolean(false),
+  status: AppStatus.LOADED,
+  user: {} as UserType
 });
 
-export interface AuthPRoviderProps {
-  children: React.ReactNode;
+export interface AuthProviderProps {
+  login: ({ username, password }: LoginInput) => Promise<any>;
+  logout: () => void;
+  isAuth: () => boolean;
+  status: AppStatus.LOADING & AppStatus.LOADED;
+  user: UserType;
 }
 
 export const AuthProvider = () => {
-  const [user, setUser] = useState();
-  const [status, setStatus] = useState('loading');
-  const [accessToken, setAccessToken] = useLocalStorage('access_token', undefined);
-  const [refreshToken, setRefreshToken] = useLocalStorage('refresh_token', undefined);
+  const [user, setUser] = useState<UserType>();
+  const [status, setStatus] = useState(AppStatus.LOADING);
+
+  const [, setTokenExpiration] = useLocalStorage(UserLocalStorageKey.TOKEN_EXPIRATION, undefined);
+
+  const [, setAccessToken] = useLocalStorage(UserLocalStorageKey.ACCESS_TOKEN, undefined);
+
+  const [, setRefreshToken] = useLocalStorage(UserLocalStorageKey.REFRESH_TOKEN, undefined);
+
   const [loginMutation] = useMutation(LOGIN);
   const navigate = useNavigate();
 
-  // call this function when you want to authenticate the user
-  const login = ({ username, password }: any) => {
+  const getTokenExpiration = (): Date =>
+    new Date(new Date().getTime() + TOKEN_EXPIRATION_MINUTES * 60000);
+
+  const login = ({ username, password }: LoginInput): Promise<any> => {
     return loginMutation({
-      variables: { input: { username, password } },
-      onCompleted: ({ login }: any) => {
-        const { access_token, refresh_token, user } = login;
+      variables: {
+        input: {
+          username,
+          password
+        }
+      },
+      onCompleted: ({ login }: any): void => {
+        const { access_token, refresh_token, user }: AuthResponseType = login;
+        const tokenExpiration = getTokenExpiration();
+
         setAccessToken(access_token);
         setRefreshToken(refresh_token);
         setUser(user);
-        console.log('redirect to calls');
+        setTokenExpiration(tokenExpiration);
+        setStatus(AppStatus.LOADED);
         navigate('/calls');
       }
     });
   };
 
-  // call this function to sign out logged in user
-  const logout = () => {
+  const logout = (): void => {
     setAccessToken(null);
     setRefreshToken(null);
     navigate('/login', { replace: true });
   };
 
-  const value = useMemo(() => {
-    return {
-      login,
-      logout
-    };
-  }, []);
+  const isAuth = (): boolean => {
+    const accessTokenInLocalStorage = localStorage.getItem(UserLocalStorageKey.ACCESS_TOKEN);
+
+    const accessTokenIsInLocalStorage =
+      accessTokenInLocalStorage !== null && accessTokenInLocalStorage !== undefined;
+
+    if (!accessTokenIsInLocalStorage) {
+      return false;
+    }
+
+    return true;
+  };
+
   return (
-    <AuthContext.Provider value={value}>
+    <AuthContext.Provider
+      value={{
+        login,
+        logout,
+        isAuth,
+        status,
+        user: user as UserType
+      }}
+    >
       <Outlet />
     </AuthContext.Provider>
   );

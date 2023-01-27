@@ -1,8 +1,5 @@
-export const enum UserLocalStorageKey {
-  CURRENT_USER = 'current_user',
-  ACCESS_TOKEN = 'access_token',
-  REFRESH_TOKEN = 'refresh_token',
-  TOKEN_EXPIRATION = 'token_expiration'
-}
+import { TOKEN_EXPIRED_URL_PARAM } from './token';
 
-export const TOKEN_EXPIRATION_MINUTES = 9;
+export const USER_LOGIN_ROUTE = '/login';
+
+export const USER_EXPIRED_SESSION_REDIRECTION_ROUTE = `${USER_LOGIN_ROUTE}?${TOKEN_EXPIRED_URL_PARAM}=true`;

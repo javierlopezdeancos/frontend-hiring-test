@@ -26,7 +26,6 @@ export const LoginPage = () => {
       removeToast(LOGIN_REJECTED);
     } catch (error) {
       console.log(error);
-
       showToast({
         id: LOGIN_REJECTED,
         message: 'Invalid email or password',

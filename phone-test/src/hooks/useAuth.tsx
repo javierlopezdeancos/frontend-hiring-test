@@ -1,11 +1,15 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { LOGIN } from '../gql/mutations';
+import { ME } from '../gql/queries/me';
 import { useLocalStorage } from './useLocalStorage';
-import { useMutation } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import type { LoginInput, AuthResponseType } from '../declarations/auth';
 import { AppStatus } from '../constants/app';
-import { UserLocalStorageKey, TOKEN_EXPIRATION_MINUTES } from '../constants/user';
+import { USER_LOGIN_ROUTE } from '../constants/user';
+import { TokenStorageKey } from '../constants/token';
+import { CALLS_ROUTE } from '../constants/call';
+import { getTokenExpiration } from '../helpers/token';
 
 const AuthContext = createContext({
   login: ({ username, password }: LoginInput): Promise<any> =>
@@ -29,18 +33,18 @@ export interface AuthProviderProps {
 export const AuthProvider = () => {
   const [user, setUser] = useState<UserType>();
   const [status, setStatus] = useState(AppStatus.LOADING);
-
-  const [, setTokenExpiration] = useLocalStorage(UserLocalStorageKey.TOKEN_EXPIRATION, undefined);
-
-  const [, setAccessToken] = useLocalStorage(UserLocalStorageKey.ACCESS_TOKEN, undefined);
-
-  const [, setRefreshToken] = useLocalStorage(UserLocalStorageKey.REFRESH_TOKEN, undefined);
-
+  const [, setTokenExpiration] = useLocalStorage(TokenStorageKey.EXPIRATION, undefined);
+  const [accessToken, setAccessToken] = useLocalStorage(TokenStorageKey.ACCESS, undefined);
+  const [, setRefreshToken] = useLocalStorage(TokenStorageKey.REFRESH, undefined);
   const [loginMutation] = useMutation(LOGIN);
+  const { data: currentUser } = useQuery(ME);
   const navigate = useNavigate();
 
-  const getTokenExpiration = (): Date =>
-    new Date(new Date().getTime() + TOKEN_EXPIRATION_MINUTES * 60000);
+  useEffect(() => {
+    if (!user && currentUser) {
+      setUser(currentUser.me);
+    }
+  }, [currentUser, user]);
 
   const login = ({ username, password }: LoginInput): Promise<any> => {
     return loginMutation({
@@ -52,14 +56,15 @@ export const AuthProvider = () => {
       },
       onCompleted: ({ login }: any): void => {
         const { access_token, refresh_token, user }: AuthResponseType = login;
-        const tokenExpiration = getTokenExpiration();
+        const token_expiration = getTokenExpiration();
 
         setAccessToken(access_token);
         setRefreshToken(refresh_token);
         setUser(user);
-        setTokenExpiration(tokenExpiration);
+        setTokenExpiration(token_expiration);
         setStatus(AppStatus.LOADED);
-        navigate('/calls');
+
+        navigate(CALLS_ROUTE);
       }
     });
   };
@@ -67,16 +72,11 @@ export const AuthProvider = () => {
   const logout = (): void => {
     setAccessToken(null);
     setRefreshToken(null);
-    navigate('/login', { replace: true });
+    navigate(USER_LOGIN_ROUTE, { replace: true });
   };
 
   const isAuth = (): boolean => {
-    const accessTokenInLocalStorage = localStorage.getItem(UserLocalStorageKey.ACCESS_TOKEN);
-
-    const accessTokenIsInLocalStorage =
-      accessTokenInLocalStorage !== null && accessTokenInLocalStorage !== undefined;
-
-    if (!accessTokenIsInLocalStorage) {
+    if (!accessToken && !user) {
       return false;
     }
 

@@ -28,10 +28,10 @@ export const CallDetailsPage = () => {
       }
     },
     onError: e => {
-      console.log(e);
+      console.error(e);
     },
     onComplete: () => {
-      console.log('unsubscription has been closed successfully');
+      console.error('unsubscription has been closed successfully');
     }
   });
 

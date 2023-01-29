@@ -1,4 +1,4 @@
-import { createBrowserRouter, createRoutesFromElements, Route } from 'react-router-dom';
+import { createBrowserRouter, createRoutesFromElements, Navigate, Route } from 'react-router-dom';
 import { LoginPage } from './pages/Login/Login';
 import { CallsListPage } from './pages/Calls/CallsList/CallsList';
 import { CallDetailsPage } from './pages/Calls/CallDetails/CallDetails';
@@ -19,6 +19,7 @@ const client = AuthService.getClient();
 export const router = createBrowserRouter(
   createRoutesFromElements(
     <Route element={<AuthProvider />}>
+      <Route path="*" element={<Navigate to="/calls" />} />
       <Route path="/login" element={<LoginPage />} />
       <Route
         path="/calls"

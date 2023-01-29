@@ -1,6 +1,7 @@
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery, useMutation, useSubscription } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 import { GET_CALL_DETAILS } from '../../../gql/queries/getCallDetails';
+import { ON_UPDATED_CALL } from '../../../gql/subscriptions/onUpdatedCall';
 import { Box, Typography, Spacer, Toggle } from '@aircall/tractor';
 import { formatDate, formatDuration } from '../../../helpers/dates';
 import { CallNotes } from './components/CallNotes';
@@ -17,10 +18,27 @@ export const CallDetailsPage = () => {
 
   const [archiveCallMutation] = useMutation(ARCHIVE_CALL);
 
+  const { data: wsData } = useSubscription(ON_UPDATED_CALL, {
+    variables: {},
+    onData: res => (res: any) => {
+      const updatedCall = res?.data?.data?.onUpdatedCall;
+
+      if (updatedCall) {
+        call = updatedCall;
+      }
+    },
+    onError: e => {
+      console.log(e);
+    },
+    onComplete: () => {
+      console.log('unsubscription has been closed successfully');
+    }
+  });
+
   if (loading) return <p>Loading call details...</p>;
   if (error) return <p>ERROR</p>;
 
-  const { call } = data;
+  let { call } = data;
 
   const type = call.call_type;
   const createdAt = formatDate(call.created_at);
@@ -35,9 +53,6 @@ export const CallDetailsPage = () => {
     archiveCallMutation({
       variables: {
         id: call.id
-      },
-      onCompleted: ({ callMutated }: any): void => {
-        const { is_archived }: Call = callMutated;
       }
     });
   };

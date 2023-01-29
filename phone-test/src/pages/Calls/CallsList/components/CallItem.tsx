@@ -13,9 +13,10 @@ import { useNavigate } from 'react-router-dom';
 
 interface CallProps {
   call: Call;
+  position?: number;
 }
 
-export const CallItem: FC<CallProps> = ({ call }) => {
+export const CallItem: FC<CallProps> = ({ call, position }) => {
   const navigate = useNavigate();
 
   const title =
@@ -42,6 +43,7 @@ export const CallItem: FC<CallProps> = ({ call }) => {
       borderRadius={16}
       cursor="pointer"
       onClick={() => handleCallOnClick(call.id)}
+      data-testid={`call-item-${position}`}
     >
       <Grid
         gridTemplateColumns="32px 1fr max-content"

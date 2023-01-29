@@ -93,10 +93,10 @@ export const CallsListPage = () => {
       </Typography>
       {calls && calls.length > 0 && (
         <Spacer space={3} direction="vertical">
-          {calls.map((call: Call) => {
+          {calls.map((call: Call, index: number) => {
             return (
               <div key={call.id}>
-                <CallItem call={call} />
+                <CallItem call={call} position={index + 1} />
               </div>
             );
           })}

@@ -3,7 +3,6 @@ import { useNavigate, Outlet } from 'react-router-dom';
 import { LOGIN } from '../gql/mutations';
 import { ME } from '../gql/queries/me';
 import { useMutation, useQuery } from '@apollo/client';
-import type { LoginInput, AuthResponseType } from '../declarations/auth';
 import { USER_LOGIN_ROUTE } from '../constants/user';
 import { TokenStorageKey } from '../constants/token';
 import { CALLS_ROUTE } from '../constants/call';

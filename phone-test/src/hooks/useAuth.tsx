@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { LOGIN } from '../gql/mutations';
 import { ME } from '../gql/queries/me';
@@ -32,6 +32,12 @@ export const AuthProvider = () => {
 
   const [loginMutation] = useMutation(LOGIN);
   const { data: currentUser } = useQuery(ME);
+
+  useEffect(() => {
+    if (!user) {
+      currentUser && setUser(currentUser.me);
+    }
+  }, [currentUser, user]);
 
   const login = ({ username, password }: LoginInput): Promise<any> => {
     return loginMutation({

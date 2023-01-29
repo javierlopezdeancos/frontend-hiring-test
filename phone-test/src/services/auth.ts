@@ -14,17 +14,11 @@ import { API_URL, WEB_SOCKET_URL } from '../constants/env';
 
 import type { NormalizedCacheObject } from '@apollo/client';
 
-const tokenExpiration = localStorage.getItem(TokenStorageKey.EXPIRATION);
-
-const isTokenExpirationStored = (): boolean => {
-  return !!tokenExpiration;
-};
-
 // Check if token is expired, returns true if no token
 const isTokenExpired = (): boolean => {
-  const tokenExpirationIsStored = isTokenExpirationStored();
+  const tokenExpiration = localStorage.getItem(TokenStorageKey.EXPIRATION);
 
-  if (!tokenExpirationIsStored) {
+  if (!tokenExpiration) {
     return true;
   }
 

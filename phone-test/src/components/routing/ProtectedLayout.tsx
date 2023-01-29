@@ -17,7 +17,7 @@ export const ProtectedLayout = () => {
           <img src={logo} alt="Aircall" width="32px" height="32px" />
         </Link>
         <Spacer space="m" alignItems="center">
-          <span>{`Welcome ${user?.username}!`}</span>
+          {user?.username && <span>{`Welcome ${user?.username}!`}</span>}
           <Button mode="link" onClick={handleLogout}>
             logout
           </Button>

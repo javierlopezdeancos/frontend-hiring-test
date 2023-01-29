@@ -37,6 +37,7 @@ export const CallDetailsPage = () => {
 
   if (loading) return <p>Loading call details...</p>;
   if (error) return <p>ERROR</p>;
+  if (!data && !wsData) return <p>Not found</p>;
 
   let { call } = data;
 

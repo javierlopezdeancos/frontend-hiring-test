@@ -157,12 +157,6 @@ const getSubscriptionClient = (webSocketURL: string) => {
   });
 };
 
-// The split function takes three parameters:
-//
-// * A function that's called for each operation to execute
-// * The Link to use for an operation if the function returns a "truthy" value
-// * The Link to use for an operation if the function returns a "falsy" value
-// Depending on what kind of operation is being sent
 const getSplitLink = (webSocketLink: WebSocketLink, httpLink: ApolloLink): ApolloLink => {
   return split(
     // split based on operation type

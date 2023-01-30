@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
 import { LOGIN } from '../gql/mutations';
 import { ME } from '../gql/queries/me';
@@ -38,37 +38,40 @@ export const AuthProvider = () => {
     }
   }, [currentUser, user]);
 
-  const login = ({ username, password }: LoginInput): Promise<any> => {
-    return loginMutation({
-      variables: {
-        input: {
-          username,
-          password
+  const login = useCallback(
+    ({ username, password }: LoginInput): Promise<any> => {
+      return loginMutation({
+        variables: {
+          input: {
+            username,
+            password
+          }
+        },
+        onCompleted: ({ login }: any): void => {
+          const { access_token, refresh_token, user }: AuthResponseType = login;
+          const token_expiration = getTokenExpiration();
+
+          localStorage.setItem(TokenStorageKey.ACCESS, JSON.stringify(access_token));
+          localStorage.setItem(TokenStorageKey.REFRESH, JSON.stringify(refresh_token));
+          localStorage.setItem(TokenStorageKey.EXPIRATION, JSON.stringify(token_expiration));
+
+          setUser(user);
+          navigate(CALLS_ROUTE);
         }
-      },
-      onCompleted: ({ login }: any): void => {
-        const { access_token, refresh_token, user }: AuthResponseType = login;
-        const token_expiration = getTokenExpiration();
+      });
+    },
+    [loginMutation, navigate]
+  );
 
-        localStorage.setItem(TokenStorageKey.ACCESS, JSON.stringify(access_token));
-        localStorage.setItem(TokenStorageKey.REFRESH, JSON.stringify(refresh_token));
-        localStorage.setItem(TokenStorageKey.EXPIRATION, JSON.stringify(token_expiration));
-
-        setUser(user);
-        navigate(CALLS_ROUTE);
-      }
-    });
-  };
-
-  const logout = (): void => {
+  const logout = useCallback((): void => {
     localStorage.removeItem(TokenStorageKey.ACCESS);
     localStorage.removeItem(TokenStorageKey.REFRESH);
     localStorage.removeItem(TokenStorageKey.EXPIRATION);
 
     navigate(USER_LOGIN_ROUTE, { replace: true });
-  };
+  }, [navigate]);
 
-  const isAuth = (): boolean => {
+  const isAuth = useCallback((): boolean => {
     const accessToken = localStorage.getItem(TokenStorageKey.ACCESS);
 
     if (!accessToken) {
@@ -76,17 +79,19 @@ export const AuthProvider = () => {
     }
 
     return true;
-  };
+  }, []);
+
+  const value = useMemo(() => {
+    return {
+      login,
+      logout,
+      isAuth,
+      user: (user || currentUser) as UserType
+    };
+  }, [user, currentUser, login, logout, isAuth]);
 
   return (
-    <AuthContext.Provider
-      value={{
-        login,
-        logout,
-        isAuth,
-        user: (user || currentUser) as UserType
-      }}
-    >
+    <AuthContext.Provider value={value}>
       <Outlet />
     </AuthContext.Provider>
   );

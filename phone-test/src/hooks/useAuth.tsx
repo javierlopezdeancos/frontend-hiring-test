@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect, useMemo, useCallback } 
 import { useNavigate, Outlet } from 'react-router-dom';
 import { LOGIN } from '../gql/mutations';
 import { ME } from '../gql/queries/me';
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery, ApolloClient, NormalizedCacheObject } from '@apollo/client';
 import { USER_LOGIN_ROUTE } from '../constants/user';
 import { TokenStorageKey } from '../constants/token';
 import { CALLS_ROUTE } from '../constants/call';
@@ -18,14 +18,11 @@ const AuthContext = createContext({
   user: {} as UserType
 });
 
-export interface AuthProviderProps {
-  login: ({ username, password }: LoginInput) => Promise<any>;
-  logout: () => void;
-  isAuth: () => boolean;
-  user: UserType;
-}
+type AuthProviderProps = {
+  client: ApolloClient<NormalizedCacheObject>;
+};
 
-export const AuthProvider = () => {
+export const AuthProvider = (props: AuthProviderProps) => {
   const [user, setUser] = useState<UserType>();
   const navigate = useNavigate();
 
@@ -68,8 +65,9 @@ export const AuthProvider = () => {
     localStorage.removeItem(TokenStorageKey.REFRESH);
     localStorage.removeItem(TokenStorageKey.EXPIRATION);
 
+    props.client.clearStore();
     navigate(USER_LOGIN_ROUTE, { replace: true });
-  }, [navigate]);
+  }, [navigate, props.client]);
 
   const isAuth = useCallback((): boolean => {
     const accessToken = localStorage.getItem(TokenStorageKey.ACCESS);

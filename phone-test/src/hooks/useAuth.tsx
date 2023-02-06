@@ -22,7 +22,7 @@ type AuthProviderProps = {
   client: ApolloClient<NormalizedCacheObject>;
 };
 
-export const AuthProvider = (props: AuthProviderProps) => {
+export const AuthProvider = ({ client }: AuthProviderProps) => {
   const [user, setUser] = useState<UserType>();
   const navigate = useNavigate();
 
@@ -65,9 +65,9 @@ export const AuthProvider = (props: AuthProviderProps) => {
     localStorage.removeItem(TokenStorageKey.REFRESH);
     localStorage.removeItem(TokenStorageKey.EXPIRATION);
 
-    props.client.clearStore();
+    client.clearStore();
     navigate(USER_LOGIN_ROUTE, { replace: true });
-  }, [navigate, props.client]);
+  }, [navigate, client]);
 
   const isAuth = useCallback((): boolean => {
     const accessToken = localStorage.getItem(TokenStorageKey.ACCESS);

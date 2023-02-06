@@ -1,7 +1,6 @@
-import { useQuery, useMutation, useSubscription } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 import { GET_CALL_DETAILS } from '../../../gql/queries/getCallDetails';
-import { ON_UPDATED_CALL } from '../../../gql/subscriptions/onUpdatedCall';
 import { Box, Typography, Spacer, Toggle } from '@aircall/tractor';
 import { formatDate, formatDuration } from '../../../helpers/dates';
 import { CallNotes } from './components/CallNotes';
@@ -18,15 +17,6 @@ export const CallDetailsPage = () => {
 
   const [archiveCallMutation] = useMutation(ARCHIVE_CALL);
 
-  useSubscription(ON_UPDATED_CALL, {
-    onError: e => {
-      console.error(e);
-    },
-    onComplete: () => {
-      console.error('unsubscription has been closed successfully');
-    }
-  });
-
   if (loading) return <p>Loading call details...</p>;
   if (error) return <p>ERROR</p>;
   if (!data) return <p>Not found</p>;
@@ -41,6 +31,7 @@ export const CallDetailsPage = () => {
   const via = call.via;
   const duration = formatDuration(call.duration / 1000);
   const archived = call.is_archived;
+  const notes = call.notes;
 
   const toggleArchive = () => {
     archiveCallMutation({
@@ -101,9 +92,9 @@ export const CallDetailsPage = () => {
               </Spacer>
             </Spacer>
           </section>
-          {call.notes && call.notes.length > 0 && (
+          {notes && notes.length > 0 && (
             <footer>
-              <CallNotes notes={call.notes} callId={call.id} />
+              <CallNotes notes={notes} callId={call.id} />
             </footer>
           )}
         </Spacer>

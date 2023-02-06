@@ -1,7 +1,6 @@
-import { useQuery, useSubscription } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import styled from 'styled-components';
 import { PAGINATED_CALLS } from '../../../gql/queries';
-import { ON_UPDATED_CALL } from '../../../gql/subscriptions/onUpdatedCall';
 import { Typography, Spacer, Pagination } from '@aircall/tractor';
 import { CallItem } from './components/CallItem';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -43,15 +42,6 @@ export const CallsListPage = () => {
   });
 
   let callsList: Call[] = data ? (data.paginatedCalls as PaginatedCalls).nodes : [];
-
-  useSubscription(ON_UPDATED_CALL, {
-    onError: e => {
-      console.error(e);
-    },
-    onComplete: () => {
-      console.error('unsubscription has been closed successfully');
-    }
-  });
 
   if (loading) return <p>Loading calls...</p>;
   if (error) return <p>ERROR</p>;

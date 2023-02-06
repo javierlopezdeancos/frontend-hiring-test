@@ -1,6 +1,6 @@
-import * as React from 'react';
-import { useNavigate } from 'react-router-dom';
-
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { TokenStorageKey } from '../../constants/token';
 import { Flex, Icon, LogoMarkMono, Spacer, useToast } from '@aircall/tractor';
 
 import { FormState } from './Login.decl';
@@ -10,10 +10,14 @@ import { useAuth } from '../../hooks/useAuth';
 const LOGIN_REJECTED = 'LOGIN_REJECTED';
 
 export const LoginPage = () => {
+  const [formState, setFormState] = useState<FormState>('Idle');
   const { login } = useAuth();
-  const [formState, setFormState] = React.useState<FormState>('Idle');
   const { showToast, removeToast } = useToast();
-  const navigate = useNavigate();
+  const [search] = useSearchParams();
+
+  const isTokenExpiredRoute = search.get(TokenStorageKey.EXPIRATION)
+    ? Boolean(search.get('token_expired'))
+    : false;
 
   const onSubmit = async (email: string, password: string) => {
     try {
@@ -29,6 +33,16 @@ export const LoginPage = () => {
       });
     }
   };
+
+  useEffect(() => {
+    if (isTokenExpiredRoute) {
+      showToast({
+        id: LOGIN_REJECTED,
+        message: 'Your session has expired.',
+        variant: 'error'
+      });
+    }
+  }, [isTokenExpiredRoute, showToast]);
 
   return (
     <Spacer p={5} h="100%" direction="vertical" justifyContent="center" fluid space={5}>

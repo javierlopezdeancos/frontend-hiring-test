@@ -18,7 +18,7 @@ const client = AuthService.getClient();
 
 export const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route element={<AuthProvider />}>
+    <Route element={<AuthProvider client={client} />}>
       <Route path="*" element={<Navigate to="/calls" />} />
       <Route path="/login" element={<LoginPage />} />
       <Route

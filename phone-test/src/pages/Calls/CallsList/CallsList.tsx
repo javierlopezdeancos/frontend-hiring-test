@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useQuery, useSubscription } from '@apollo/client';
 import styled from 'styled-components';
 import { PAGINATED_CALLS } from '../../../gql/queries';
@@ -20,8 +19,6 @@ export const PaginationWrapper = styled.div`
 const CALLS_PER_PAGE = 5;
 
 export const CallsListPage = () => {
-  const [calls, setCalls] = useState<any>();
-
   const [search] = useSearchParams();
   const navigate = useNavigate();
 
@@ -29,13 +26,10 @@ export const CallsListPage = () => {
   const activePage = !!pageQueryParams ? parseInt(pageQueryParams) : 1;
   const callsPerPage = parseInt(search.get('size') ?? CALLS_PAGINATION_SIZE_BY_DEFAULT.toString());
 
-  const handleCalls = (list: Call[]) => {
-    let sortList = [...list].sort(function (a, b) {
+  const getSortCalls = (calls: Call[]): Call[] =>
+    [...calls].sort(function (a, b) {
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
-
-    setCalls(sortList);
-  };
 
   //Get the calls list
   const { loading, error, data } = useQuery(PAGINATED_CALLS, {
@@ -44,30 +38,13 @@ export const CallsListPage = () => {
       limit: callsPerPage
     },
     onCompleted: data => {
-      callList = (data.paginatedCalls as PaginatedCalls).nodes;
-      handleCalls(callList);
+      callsList = getSortCalls((data.paginatedCalls as PaginatedCalls).nodes);
     }
   });
 
-  let callList: Call[] = data ? (data.paginatedCalls as PaginatedCalls).nodes : [];
+  let callsList: Call[] = data ? (data.paginatedCalls as PaginatedCalls).nodes : [];
 
-  const handleUpdatedCalls = (res: any) => {
-    const call = res?.data?.data?.onUpdatedCall;
-
-    if (call) {
-      const list = [...callList];
-      const index = list.findIndex(x => x.id === call.id);
-
-      if (index !== -1) {
-        const updatedList = [...list.slice(0, index), call, ...list.slice(index + 1)];
-        handleCalls(updatedList);
-      }
-    }
-  };
-
-  const { data: wsData } = useSubscription(ON_UPDATED_CALL, {
-    variables: {},
-    onData: res => handleUpdatedCalls(res),
+  useSubscription(ON_UPDATED_CALL, {
     onError: e => {
       console.error(e);
     },
@@ -78,7 +55,7 @@ export const CallsListPage = () => {
 
   if (loading) return <p>Loading calls...</p>;
   if (error) return <p>ERROR</p>;
-  if (!data && !wsData) return <p>Not found</p>;
+  if (!data) return <p>Not found</p>;
 
   const { totalCount } = data ? data.paginatedCalls : 0;
 
@@ -91,9 +68,9 @@ export const CallsListPage = () => {
       <Typography variant="displayM" textAlign="center" py={3}>
         Calls History
       </Typography>
-      {calls && calls.length > 0 && (
+      {callsList && callsList.length > 0 && (
         <Spacer space={3} direction="vertical">
-          {calls.map((call: Call, index: number) => {
+          {callsList.map((call: Call, index: number) => {
             return (
               <div key={call.id}>
                 <CallItem call={call} position={index + 1} />

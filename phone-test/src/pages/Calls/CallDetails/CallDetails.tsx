@@ -18,15 +18,7 @@ export const CallDetailsPage = () => {
 
   const [archiveCallMutation] = useMutation(ARCHIVE_CALL);
 
-  const { data: wsData } = useSubscription(ON_UPDATED_CALL, {
-    variables: {},
-    onData: res => (res: any) => {
-      const updatedCall = res?.data?.data?.onUpdatedCall;
-
-      if (updatedCall) {
-        call = updatedCall;
-      }
-    },
+  useSubscription(ON_UPDATED_CALL, {
     onError: e => {
       console.error(e);
     },
@@ -37,7 +29,7 @@ export const CallDetailsPage = () => {
 
   if (loading) return <p>Loading call details...</p>;
   if (error) return <p>ERROR</p>;
-  if (!data && !wsData) return <p>Not found</p>;
+  if (!data) return <p>Not found</p>;
 
   let { call } = data;
 

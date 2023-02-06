@@ -1,4 +1,11 @@
-import { ApolloClient, InMemoryCache, createHttpLink, split, ApolloLink } from '@apollo/client';
+import {
+  ApolloClient,
+  InMemoryCache,
+  createHttpLink,
+  split,
+  ApolloLink,
+  NormalizedCacheObject
+} from '@apollo/client';
 import { print } from 'graphql';
 import { setContext } from '@apollo/client/link/context';
 import { WebSocketLink } from '@apollo/client/link/ws';
@@ -11,8 +18,6 @@ import { TokenStorageKey } from '../constants/token';
 import { getTokenExpiration } from '../helpers/token';
 import { NO_API_URL_SET_ERROR, NO_WEB_SOCKET_URL_SET_ERROR } from '../constants/env';
 import { API_URL, WEB_SOCKET_URL } from '../constants/env';
-
-import type { NormalizedCacheObject } from '@apollo/client';
 
 // Check if token is expired, returns true if no token
 const isTokenExpired = (): boolean => {
